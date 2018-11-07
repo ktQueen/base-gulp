@@ -10,7 +10,7 @@ var gulp = require('gulp'), // gulp模块
     cache = require('gulp-cache'), // 图片缓存，图片替换了才压缩
     del = require('del'), // 文件删除
     notify = require('gulp-notify'), // 提示
-    util = require('gulp-util'), // 日志
+    util = require('gulp-util'), // 基础的工具
     runSequence = require('run-sequence'), // 设定同步异步执行任务
     browserSync = require('browser-sync').create(), //自动刷新
     reload = browserSync.reload,
@@ -21,7 +21,7 @@ var options={
     del:'./dist/**/*',// 删除文件
     index:'demo.html', // 文件入口
     port:8081, // 端口
-    dist:'./dist/**/*.*',// 编译生成的文件
+    dist:'./dist/**/*.*',// 监听编译生成的文件夹所有文件
 };
 
 //配置文件路径
