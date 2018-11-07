@@ -1,11 +1,12 @@
-var gulp = require('gulp'), // gulp
-    fileinclude  = require('gulp-file-include'), // 模版分离
+var gulp = require('gulp'), // gulp模块
+    fileinclude = require('gulp-file-include'), // 模版分离
     spritesmith=require('gulp.spritesmith'), //制作雪碧图插件
     sass = require("gulp-sass"), //sass的编译
     autoprefixer = require("gulp-autoprefixer"), //css 浏览器前缀补全
     cleanCss = require('gulp-clean-css'); // 压缩 css
     uglify = require("gulp-uglify"), // js文件压缩
     imagemin = require('gulp-imagemin'),//压缩图片
+    // imageminJpegRecompress = require('imagemin-jpeg-recompress'),//处理图片
     cache = require('gulp-cache'), // 图片缓存，图片替换了才压缩
     del = require('del'), // 文件删除
     notify = require('gulp-notify'), // 提示
@@ -19,7 +20,8 @@ var gulp = require('gulp'), // gulp
 var options={
     del:'./dist/**/*',// 删除文件
     index:'demo.html', // 文件入口
-    port:8081 // 端口
+    port:8081, // 端口
+    dist:'./dist/**/*.*',// 编译生成的文件
 };
 
 //配置文件路径
@@ -65,6 +67,9 @@ gulp.task('sprite',function(){
             padding:5,
             algorithm:'binary-tree'
         }))
+        .on('error', function (err) {
+            console.log(err);
+        })
         .pipe(gulp.dest('./src/img/')); //输出目录
 });
 
@@ -141,7 +146,8 @@ gulp.task('server',function(){
     gulp.watch([paths.src_sprite_img],['sprite']);
     gulp.watch([paths.src_all_scss],['style']);
     gulp.watch([paths.src_img],['image']);
-    gulp.watch([paths.src_js],['script']).on('change',reload);
+    gulp.watch([paths.src_js],['script']);
+    gulp.watch([options.dist]).on('change',reload);
 });
 
 //编译,清空 /dist 文件夹，将 html、编译后的css、编译后的js、图片引入
