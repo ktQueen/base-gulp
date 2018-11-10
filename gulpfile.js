@@ -155,3 +155,7 @@ gulp.task('server',function(){
 gulp.task('dev', (cb) => {
     runSequence('del', 'page', 'sprite','style','image','script',['server'],cb);
 });
+
+gulp.task('test', (cb) => {
+    runSequence('del', 'page', 'sprite','style','image','script',['server'],cb);
+});
