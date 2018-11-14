@@ -125,10 +125,9 @@ gulp.task('script',function(done){
     glob(paths.src_js, function(err, files) {
         if(err) done(err);
         var tasks = files.map(function(entry) {
-            util.log(util.colors.red(entry));
-            return browserify({ entries: [entry] })
+            var b=browserify({ entries: [entry] })
                 .bundle()
-                .pipe(source(entry))
+                .pipe(source(entry.replace('src/js/','')))
                 .pipe(streamify(uglify({
                     mangle: true, // 类型：Boolean 默认：true 是否修改变量名
                     compress: true, // 类型：Boolean 默认：true 是否完全压缩
@@ -136,21 +135,17 @@ gulp.task('script',function(done){
                 })))  //使用uglify进行压缩
                 .on('error', function (err) {
                     util.log(util.colors.red('[Error]'), err.toString());
-                })
-                .pipe(gulp.dest(paths.dist_js)) //输出到指定文件夹
-                .pipe(notify({ message: 'script is OK' })) //提醒任务完成
+                });
+            if(entry.indexOf('src/js/module/')=== -1){
+                b.pipe(gulp.dest(paths.dist_js)) //输出到指定文件夹
+            }
+            b.pipe(notify({ message: 'script is OK' })) //提醒任务完成
                 .pipe(reload({stream: true}));
+            return b;
         });
         es.merge(tasks).on('end', done);
-    })
+    });
 });
-gulp.task('script-move',function(cb){
-    gulp.src(['dist/js/src/js/common','dist/js/src/js/*.js'])
-        .pipe(gulp.dest(paths.dist_js)) //输出到指定文件夹
-        .pipe(reload({stream: true}));
-    return del(['dist/js/src'], cb);
-});
-
 
 //静态服务器
 gulp.task('server',function(){
@@ -176,7 +171,7 @@ gulp.task('server',function(){
 //编译,清空 /dist 文件夹，将 html、编译后的css、编译后的js、图片引入
 // [] 中任务是并行的，其他按照先后顺序执行
 gulp.task('dev', (cb) => {
-    runSequence('del', 'page', 'sprite','style','image','script','script-move',['server'],cb);
+    runSequence('del', 'page', 'sprite','style','image','script',['server'],cb);
 });
 
 gulp.task('test', (cb) => {
