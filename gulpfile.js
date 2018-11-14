@@ -40,7 +40,9 @@ var paths={
     src_scss:"src/css/*.scss",//需要编译的scss文件
     src_all_scss:"src/css/**/*.scss",// 监听所有的scss文件
     src_img:"src/img/*.png", // 需要生成到编译文件的img
-    src_js:"src/js/**/*.js",
+    src_js:"src/js/**/*.js",//需要生成到编译文件的js
+    src_js_replace:'src/js/',// 编译文件不需要的目录结构
+    src_js_del:'src/js/module/',// 编译文件不需要的目录
     //dist_变量开头的都是编译过后的文件目录
     dist:"dist", // 生成到编译文件根目录
     dist_css:"dist/css",// 生成css的地址
@@ -127,7 +129,7 @@ gulp.task('script',function(done){
         var tasks = files.map(function(entry) {
             var b=browserify({ entries: [entry] })
                 .bundle()
-                .pipe(source(entry.replace('src/js/','')))
+                .pipe(source(entry.replace(paths.src_js_replace,'')))
                 .pipe(streamify(uglify({
                     mangle: true, // 类型：Boolean 默认：true 是否修改变量名
                     compress: true, // 类型：Boolean 默认：true 是否完全压缩
@@ -136,7 +138,7 @@ gulp.task('script',function(done){
                 .on('error', function (err) {
                     util.log(util.colors.red('[Error]'), err.toString());
                 });
-            if(entry.indexOf('src/js/module/')=== -1){
+            if(entry.indexOf(paths.src_js_del)=== -1){
                 b.pipe(gulp.dest(paths.dist_js)) //输出到指定文件夹
             }
             b.pipe(notify({ message: 'script is OK' })) //提醒任务完成
