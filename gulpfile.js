@@ -3,7 +3,7 @@ var gulp = require('gulp'), // gulp模块
     spritesmith=require('gulp.spritesmith'), //制作雪碧图插件
     sass = require("gulp-sass"), //sass的编译
     autoprefixer = require("gulp-autoprefixer"), //css 浏览器前缀补全
-    cleanCss = require('gulp-clean-css'); // 压缩 css
+    cleanCss = require('gulp-clean-css'), // 压缩 css
     uglify = require("gulp-uglify"), // js文件压缩
     imagemin = require('gulp-imagemin'),//压缩图片
     // imageminJpegRecompress = require('imagemin-jpeg-recompress'),//处理图片
@@ -14,7 +14,14 @@ var gulp = require('gulp'), // gulp模块
     runSequence = require('run-sequence'), // 设定同步异步执行任务
     browserSync = require('browser-sync').create(), //自动刷新
     reload = browserSync.reload,
-    fs = require("fs");
+    fs = require("fs"),
+    // js使用require加载
+    browserify = require('browserify');
+    source = require('vinyl-source-stream'), //将Browserify的bundle()的输出转换为Gulp可用的一种虚拟文件格式流
+    streamify = require('gulp-streamify'),  //只支持 buffer 的插件直接处理 stream
+    glob = require('glob'),
+    es = require('event-stream');
+
 
 // 配置
 var options={
@@ -33,7 +40,7 @@ var paths={
     src_scss:"src/css/*.scss",//需要编译的scss文件
     src_all_scss:"src/css/**/*.scss",// 监听所有的scss文件
     src_img:"src/img/*.png", // 需要生成到编译文件的img
-    src_js:"src/js/**/*.js",
+    src_js:"src/js/*.js",
     //dist_变量开头的都是编译过后的文件目录
     dist:"dist", // 生成到编译文件根目录
     dist_css:"dist/css",// 生成css的地址
@@ -114,19 +121,27 @@ gulp.task('image',function(){
 });
 
 //script任务
-gulp.task('script',function(){
-    return gulp.src([paths.src_js])
-        .pipe(uglify({
-            mangle: true, // 类型：Boolean 默认：true 是否修改变量名
-            compress: true, // 类型：Boolean 默认：true 是否完全压缩
-            ie8: true,
-        }))  //使用uglify进行压缩
-        .on('error', function (err) {
-            util.log(util.colors.red('[Error]'), err.toString());
-        })
-        .pipe(gulp.dest(paths.dist_js)) //输出到指定文件夹
-        .pipe(notify({ message: 'script is OK' })) //提醒任务完成
-        .pipe(reload({stream: true}));
+gulp.task('script',function(done){
+    glob(paths.src_js, function(err, files) {
+        if(err) done(err);
+        var tasks = files.map(function(entry) {
+            return browserify({ entries: [entry] })
+                .bundle()
+                .pipe(source(entry.match(/([^/]+)$/)[1]))
+                .pipe(streamify(uglify({
+                    mangle: true, // 类型：Boolean 默认：true 是否修改变量名
+                    compress: true, // 类型：Boolean 默认：true 是否完全压缩
+                    ie8: true,
+                })))  //使用uglify进行压缩
+                .on('error', function (err) {
+                    util.log(util.colors.red('[Error]'), err.toString());
+                })
+                .pipe(gulp.dest(paths.dist_js)) //输出到指定文件夹
+                .pipe(notify({ message: 'script is OK' })) //提醒任务完成
+                .pipe(reload({stream: true}));
+        });
+        es.merge(tasks).on('end', done);
+    })
 });
 
 //静态服务器
