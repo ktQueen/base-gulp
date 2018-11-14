@@ -40,7 +40,7 @@ var paths={
     src_scss:"src/css/*.scss",//需要编译的scss文件
     src_all_scss:"src/css/**/*.scss",// 监听所有的scss文件
     src_img:"src/img/*.png", // 需要生成到编译文件的img
-    src_js:"src/js/*.js",
+    src_js:"src/js/**/*.js",
     //dist_变量开头的都是编译过后的文件目录
     dist:"dist", // 生成到编译文件根目录
     dist_css:"dist/css",// 生成css的地址
@@ -125,9 +125,10 @@ gulp.task('script',function(done){
     glob(paths.src_js, function(err, files) {
         if(err) done(err);
         var tasks = files.map(function(entry) {
+            util.log(util.colors.red(entry));
             return browserify({ entries: [entry] })
                 .bundle()
-                .pipe(source(entry.match(/([^/]+)$/)[1]))
+                .pipe(source(entry))
                 .pipe(streamify(uglify({
                     mangle: true, // 类型：Boolean 默认：true 是否修改变量名
                     compress: true, // 类型：Boolean 默认：true 是否完全压缩
@@ -143,6 +144,13 @@ gulp.task('script',function(done){
         es.merge(tasks).on('end', done);
     })
 });
+gulp.task('script-move',function(cb){
+    gulp.src(['dist/js/src/js/common','dist/js/src/js/*.js'])
+        .pipe(gulp.dest(paths.dist_js)) //输出到指定文件夹
+        .pipe(reload({stream: true}));
+    return del(['dist/js/src'], cb);
+});
+
 
 //静态服务器
 gulp.task('server',function(){
@@ -168,7 +176,7 @@ gulp.task('server',function(){
 //编译,清空 /dist 文件夹，将 html、编译后的css、编译后的js、图片引入
 // [] 中任务是并行的，其他按照先后顺序执行
 gulp.task('dev', (cb) => {
-    runSequence('del', 'page', 'sprite','style','image','script',['server'],cb);
+    runSequence('del', 'page', 'sprite','style','image','script','script-move',['server'],cb);
 });
 
 gulp.task('test', (cb) => {
